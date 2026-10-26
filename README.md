@@ -6,22 +6,6 @@ Web tra cứu và mượn/trả sách cho thư viện khoa. Sinh viên có thể
 
 Làm bằng React + TypeScript (Vite), Redux Toolkit, Zustand, test bằng Jest và React Testing Library.
 
-## Cách chạy
-
-```bash
-npm install
-npm run dev
-```
-
-Mở http://localhost:5173 là dùng được.
-
-Chạy test:
-
-```bash
-npm test
-```
-
-Muốn xem trường hợp API bị lỗi thì thêm `?fail=1` vào sau đường dẫn, ví dụ http://localhost:5173/?fail=1.
 
 ## Các trang
 
@@ -46,7 +30,6 @@ Về hiệu năng:
 - `BookItem` bọc `React.memo`, các hàm mượn/trả truyền xuống đều dùng `useCallback`, key là id sách
 - trang thống kê và trang sách của tôi được lazy load bằng `React.lazy` + `Suspense`
 
-Ngoài yêu cầu, mình có thêm hộp thoại xác nhận khi bấm "Trả" để tránh bấm nhầm (`src/components/ConfirmDialog.tsx`).
 
 ## Test
 
