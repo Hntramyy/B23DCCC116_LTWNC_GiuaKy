@@ -1,67 +1,58 @@
 # Mini Library
 
-Ứng dụng tra cứu và mượn/trả sách cho thư viện khoa — React + TypeScript + Vite.
+Bài giữa kỳ môn Lập trình Web nâng cao.
 
-## Chạy dự án
+Web tra cứu và mượn/trả sách cho thư viện khoa. Sinh viên có thể tìm sách, lọc theo thể loại, mượn tối đa 3 cuốn và xem lại những cuốn mình đang mượn.
+
+Làm bằng React + TypeScript (Vite), Redux Toolkit, Zustand, test bằng Jest và React Testing Library.
+
+## Cách chạy
 
 ```bash
 npm install
-npm run dev      # chạy app tại http://localhost:5173
-npm test         # chạy toàn bộ test (Jest + React Testing Library)
-npm run build    # type-check + build production
+npm run dev
 ```
 
-Giả lập API lỗi: mở `http://localhost:5173/?fail=1` → app hiện thông báo lỗi và nút "Thử lại".
+Mở http://localhost:5173 là dùng được.
 
-## Cấu trúc thư mục (feature-based)
+Chạy test:
 
-```
-src/
-├── api/booksApi.ts                  # API giả lập (Promise + setTimeout 500ms, tham số shouldFail)
-├── components/icons.tsx             # bộ icon SVG dùng chung
-├── app/
-│   ├── store.ts                     # configureStore + đăng ký middleware
-│   └── hooks.ts                     # useAppDispatch / useAppSelector
-├── features/
-│   ├── books/
-│   │   ├── booksSlice.ts            # createSlice + createAsyncThunk (pending/fulfilled/rejected)
-│   │   ├── booksSelectors.ts        # selector (createSelector)
-│   │   ├── booksSlice.test.ts
-│   │   └── components/
-│   │       ├── BookItem.tsx         # React.memo
-│   │       ├── BookItem.test.tsx
-│   │       ├── BookList.tsx         # useMemo lọc danh sách, useCallback handler
-│   │       └── BorrowQuota.tsx      # chỉ báo số sách đang mượn (x/3)
-│   ├── borrow/borrowLimitMiddleware.ts  # middleware giới hạn mượn 3 cuốn
-│   ├── filters/
-│   │   ├── filterStore.ts           # Zustand: từ khoá + thể loại
-│   │   └── components/SearchBar.tsx, CategoryFilter.tsx
-│   ├── theme/
-│   │   ├── ThemeContext.tsx         # Context + useMemo value + hook useTheme
-│   │   └── ThemeToggle.tsx
-│   └── stats/StatsPage.tsx          # route /stats, lazy load
-├── hooks/
-│   ├── useDebounce.ts               # useDebounce<T>
-│   └── useDebounce.test.ts          # fake timers
-├── pages/HomePage.tsx
-├── types/
-│   ├── api.ts                       # ApiResponse<T> + type guard isApiSuccess
-│   └── book.ts                      # Book, Category, Utility Types (Omit, Pick, Record)
-├── App.tsx                          # Routes + React.lazy + Suspense
-└── main.tsx
+```bash
+npm test
 ```
 
-## Đối chiếu yêu cầu kỹ thuật
+Muốn xem trường hợp API bị lỗi thì thêm `?fail=1` vào sau đường dẫn, ví dụ http://localhost:5173/?fail=1.
 
-| Yêu cầu | Vị trí |
-| --- | --- |
-| Generic `{ ok: true, data } \| { ok: false, error }` + type guard | `src/types/api.ts` |
-| Utility Types (`Omit`, `Pick`, `Record`, `Partial`, `ReadonlyArray`) | `src/types/book.ts`, `booksApi.ts`, test |
-| createSlice, createAsyncThunk 3 trạng thái, typed hooks | `features/books/booksSlice.ts`, `app/hooks.ts` |
-| Middleware giới hạn 3 cuốn | `features/borrow/borrowLimitMiddleware.ts` |
-| Zustand cho bộ lọc | `features/filters/filterStore.ts` |
-| Context theme + useMemo + useTheme | `features/theme/ThemeContext.tsx` |
-| useDebounce&lt;T&gt; (300ms) | `hooks/useDebounce.ts`, dùng ở `SearchBar.tsx` |
-| useMemo / React.memo / useCallback / key = id | `BookList.tsx`, `BookItem.tsx` |
-| React.lazy + Suspense cho /stats | `App.tsx` |
-| Test reducer (8) + middleware (1), component (4), useDebounce (1) | `*.test.ts(x)` |
+## Các trang
+
+- `/` danh mục sách: tìm kiếm, lọc thể loại, mượn/trả
+- `/my-books` những cuốn đang mượn
+- `/stats` thống kê số đầu sách theo thể loại
+
+## Phần làm theo yêu cầu đề
+
+API giả lập ở `src/api/booksApi.ts`, trả về Promise và trễ 500ms. Truyền `shouldFail: true` để giả lập lỗi. Kiểu dữ liệu trả về là `ApiResponse<T>`, dùng hàm `isApiSuccess` để phân biệt thành công hay lỗi (`src/types/api.ts`). Utility type có dùng `Omit`, `Pick`, `Record` trong `src/types/book.ts`.
+
+Danh sách sách và sách đang mượn để trong Redux (`src/features/books/booksSlice.ts`). `fetchBooks` viết bằng createAsyncThunk, có xử lý cả pending, fulfilled và rejected. Typed hooks nằm trong `src/app/hooks.ts`.
+
+Giới hạn mượn 3 cuốn được chặn trong middleware `src/features/borrow/borrowLimitMiddleware.ts`. Khi mượn quá thì middleware không cho action đi tiếp và hiện cảnh báo.
+
+Từ khoá tìm kiếm và thể loại đang lọc lưu bằng Zustand (`src/features/filters/filterStore.ts`). Giao diện sáng/tối dùng Context, có `useMemo` cho value và hook `useTheme` (`src/features/theme/ThemeContext.tsx`).
+
+Ô tìm kiếm dùng hook `useDebounce<T>` với độ trễ 300ms (`src/hooks/useDebounce.ts`).
+
+Về hiệu năng:
+- danh sách sau khi lọc tính bằng `useMemo` trong `BookList.tsx`
+- `BookItem` bọc `React.memo`, các hàm mượn/trả truyền xuống đều dùng `useCallback`, key là id sách
+- trang thống kê và trang sách của tôi được lazy load bằng `React.lazy` + `Suspense`
+
+Ngoài yêu cầu, mình có thêm hộp thoại xác nhận khi bấm "Trả" để tránh bấm nhầm (`src/components/ConfirmDialog.tsx`).
+
+## Test
+
+Có 16 test, chạy `npm test` đều pass:
+
+- `booksSlice.test.ts`: 8 test cho reducer và 1 test cho middleware giới hạn mượn
+- `BookItem.test.tsx`: 4 test (hiển thị thông tin, bấm Mượn gọi đúng id, nút bị khoá khi hết sách, nút Trả)
+- `useDebounce.test.ts`: 1 test dùng fake timers
+- `ConfirmDialog.test.tsx`: 2 test cho hộp thoại xác nhận
